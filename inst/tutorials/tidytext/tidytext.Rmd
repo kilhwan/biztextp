@@ -1,0 +1,195 @@
+---
+title: "정돈 텍스트 형식 Tutorial"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include = FALSE}
+library(learnr)
+library(tidyverse)
+library(tidytext)
+library(biztextp)
+library(wordcloud)
+
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+
+## 텍스트에 줄 번호 매기기
+
+`biztextp` 패키지의 `road` 데이터를 이용하여 다음 문제를 풀어보시오. `road` 데이터는 Robert Frost의 The Road Not Taken(내가 가보지 못한 길)이라는 시이다.
+
+- `author`는 저자
+- `verse`는 시의 연. 제목과 저자 이름이 있는 줄은 0으로, 나머지는 시의 연 번호 부여. 각 연의 앞의 공백 줄도 같은 연 번호 부여.
+- `text`는 시를 한 줄씩 가지고 있는 문자열.
+
+```{r road}
+road
+```
+
+1. `row_number()` 함수는 행의 번호를 만드는 함수이다. 다음 명령을 수정하여 `road` 데이터에 `linenumber`라는 열 이름으로 줄 번호를 부여해 보시오. :
+
+```{r rownumber1, exercise = TRUE}
+road %>% mutate(... = ...)
+```
+
+```{r rownumber1-solution}
+road %>% mutate(linenumber = row_number())
+```
+
+2. 다음 명령을 수정하여 `road` 데이터에 연(`verse`) 별로 줄번 호를 부여해 보시오. 즉, `verse`가 같은 번호인 줄이 1번부터 차례로 줄번호가 매겨지면 된다. 줄 번호는 `vlinenumber`라는 열 이름을 부여하시오.:
+
+```{r rownumber2, exercise = TRUE}
+road %>% 
+  group_by(...) %>%
+  mutate(... = ...)
+```
+
+```{r rownumber2-solution}
+road %>% 
+  group_by(verse) %>%
+  mutate(vlinenumber = row_number())
+```
+
+3. `road` 데이터의 `verse` 별 행 수를 세어 출력해 보시오.
+
+```{r rownumber3, exercise = TRUE}
+road %>% count(...)
+```
+
+```{r rownumber3-solution}
+road %>% count(verse)
+```
+
+
+
+## `unnest_tokens()`로 단어 추출 연습 문제
+
+`biztextp` 패키지의 `road` 데이터를 이용하여 다음 문제를 풀어보시오. 
+
+1. 다음 명령을 수정하여 `road` 데이터의 `text` 열을 단어로 토큰화하시오. 토큰화된 결과는 `word`라는 열 이름을 부여하시오. 토큰화한 결과를 `tidy_road`라는 변수에 할당하시오.:
+
+```{r word1, exercise = TRUE}
+tidy_raod <- road %>% unnest_tokens(output = ..., input = , token = "words")
+tidy_road
+```
+
+```{r word1-solution}
+tidy_road <- road %>% unnest_tokens(output = word, input = text, token = "words")
+tidy_road
+```
+
+```{r tidy-road, include=F}
+tidy_road <- road %>% unnest_tokens(output = word, input = text, token = "words")
+```
+
+2. 다음 명령을 수정하여 토큰화한 결과인 `tidy_road`를 이용하여 각 연(`verse`)의 단어 수를 출력해 보시오.:
+
+```{r word2, exercise = TRUE, exercise.setup="tidy-road"}
+tidy_road %>% count(...)
+```
+
+```{r word2-solution, exercise.setup="tidy-road"}
+tidy_road %>% count(verse)
+```
+
+3. 다음 명령을 수정하여 토큰화한 결과인 `tidy_road`를 이용하여 단어의 빈도표를 출력해 보시오. 단, 가장 빈도수가 높은 단어가 위에 나오도록 하시오.:
+
+```{r word3, exercise = TRUE, exercise.setup="tidy-road"}
+tidy_road %>% count(..., sort = ...)
+```
+
+```{r word3-solution, exercise.setup="tidy-road"}
+tidy_road %>% count(word, sort = TRUE)
+```
+
+4. 다음 명령을 수정하여 `tidy_road`를 이용하여 빈도수가 3 이상인 단어들에 대해서만 빈도표를 출력해 보시오.:
+
+```{r word4, exercise = TRUE, exercise.setup="tidy-road"}
+tidy_road %>% count(...) %>%
+  filter(... >= ...) 
+```
+
+```{r word4-solution, exercise.setup="tidy-road"}
+tidy_road %>% count(word) %>%
+  filter(n >= 3) 
+```
+
+5. 다음 명령을 수정하여 `tidy_road`를 이용하여 빈도수가 3 이상인 단어들에 대해서 단어의 빈도에 대한 막대그래프로 그려보시오.:
+
+```{r word5, exercise = TRUE, exercise.setup="tidy-road"}
+tidy_road %>% count(...) %>%
+  filter(... >= ...) %>%
+  ggplot() + geom_col(aes(..., ...))
+```
+
+```{r word5-solution, exercise.setup="tidy-road"}
+tidy_road %>% count(word) %>%
+  filter(n >= 3) %>%
+  ggplot() + geom_col(aes(word, n))
+```
+
+## 불용어 제거 연습 문제
+
+앞 단계 연습 문제의 결과인 `tidy_road`를 이용하여 다음 문제를 풀어보시오. 
+`tidytext` 패키지의 `stop_words` 데이터는 불용어 사전이다. 
+
+```{r}
+stop_words
+```
+
+1. `stop_wrods`의 모든 단어를 사용하여 `tidy_road`의 불용어를 제거해 보시오. 제거한 결과는 이후 작업에 사용하기 위해 `tidy_road`에 다시 재할당하시오. 
+
+```{r stop1, exercise = TRUE, exercise.setup="tidy-road"}
+tidy_road <- tidy_road %>% anti_join(...)
+tidy_road
+```
+
+```{r stop1-solution, exercise.setup="tidy-road"}
+tidy_road <- tidy_road %>% anti_join(stop_words)
+tidy_road
+```
+
+```{r tidy-road-stop, include=FALSE}
+tidy_road <- road %>% 
+  unnest_tokens(output = word, input = text, token = "words") %>% 
+  anti_join(stop_words)
+```
+
+2. 다음 명령을 수정하여 불용어를 제거한 결과인 `tidy_road`를 이용하여 단어의 빈도수를 출력해 보시오. 단, 가장 빈도수가 높은 단어가 위에 나오도록 하시오.:
+
+```{r stop2, exercise = TRUE, exercise.setup="tidy-road-stop"}
+tidy_road %>% count(..., sort = ...)
+```
+
+```{r stop2-solution, exercise.setup="tidy-road-stop"}
+tidy_road %>% count(word, sort = TRUE)
+```
+
+## 워드 클라우드 연습 문제
+
+`wordcloud` 패키지를 이용하여 워드 클라우드를 그려본다. 
+
+1. 다음 명령을 수정하여 불용어를 제거한 결과인 `tidy_road`를 이용하여 워드 클라우드를 그려보시오. 단, 단어 빈도가 1 이상인 단어는 모두 그리시오. :
+
+```{r wordcloud1, exercise = TRUE, exercise.setup="tidy-road-stop", fig.width=7, fig.height=8, out.width="80%"}
+tidy_road %>% count(...)
+  with(wordcloud(..., ..., min.freq = ...))
+```
+
+```{r wordcloud1-solution, exercise.setup="tidy-road-stop"}
+tidy_road %>% count(word) %>%
+  with(wordcloud(word, n, min.freq = 1))
+```
+
+2. 앞의 워드클라우드에 `brewer.pal()` 함수를 사용하여 "Dark2" 팔레트를 사용하여 3가지 색상으로 단어를 그려 보시오.(현재 단어 빈도가 1과 2인 단어밖에 없어서 두 가지 색상만 나올 것이다.):
+
+```{r wordcloud2, exercise = TRUE, exercise.setup="tidy-road-stop", fig.width=7, fig.height=8, out.width="80%"}
+tidy_road %>% count(...)
+  with(wordcloud(..., ..., min.freq = ..., colors = brewer.pal(..., ...)))
+```
+
+```{r wordcloud2-solution, exercise.setup="tidy-road-stop"}
+tidy_road %>% count(word) %>%
+  with(wordcloud(word, n, min.freq = 1, colors = brewer.pal(3, "Dark2")))
+```

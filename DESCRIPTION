@@ -1,0 +1,16 @@
+Package: biztextp
+Type: Package
+Title: Businss Text Mining Practice
+Version: 0.1.0
+Author: Kilhwan Kim
+Maintainer: The package maintainer <khkim@smu.ac.kr>
+Description: This package is aimed at providing a set of data and tutorials 
+  for the Business Data Analytics course 
+License: GPL-3
+Encoding: UTF-8
+LazyData: true
+Imports:
+  learnr,
+  tidytext,
+  tidyverse,
+  wordcloud
