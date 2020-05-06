@@ -1,0 +1,218 @@
+---
+title: "정서 분석 Tutorial"
+output: learnr::tutorial
+runtime: shiny_prerendered
+---
+
+```{r setup, include = FALSE}
+library(learnr)
+library(tidyverse)
+library(tidytext)
+library(biztextp)
+library(wordcloud)
+
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## 한 텍스트의 정서 변화 분석
+
+`biztextp` 패키지의 `commencement` 데이터를 이용하여 다음 문제를 풀어보시오. `commencement` 데이터는 Steve Jobs가 스탠포드 대학의 졸업식에서 한 연설문이다. 
+
+- `author`는 저자
+- `text` 문단 단위로 텍스를 가지고 있는 문자열.
+
+텍스트 열이 보이지 않으면 상단에 표시된 오른쪽 화살표를 클릭해 보시오. 
+
+```{r commencement}
+commencement 
+```
+
+1. 다음 명령을 수정하여 `comencement` 데이터에 문단 단위로 번호를 부여하여 `para_number`라는 열로 추가하시오.
+결과에서 새롭게 부여한 열이 보이지 않으면 상단에 표시된 오른쪽 화살표를 클릭해 보시오. 
+
+```{r word1, exercise = TRUE}
+commencement %>% mutate(... = ...)
+```
+
+```{r word1-solution}
+commencement %>% mutate(para_number = row_number())
+```
+
+2. 앞의 `page_number`가 부여된 결과에서 다음 명령을 수정하여 `text` 열을 단어로 토큰화하시오. 토큰화된 결과는 `word`라는 열 이름을 부여하시오. 
+
+```{r word2, exercise = TRUE}
+commencement %>% mutate(... = ...) %>%
+  unnest_tokens(output = ..., input = ...)
+```
+
+```{r word2-solution}
+commencement %>% mutate(para_number = row_number()) %>%
+  unnest_tokens(output = word, input = text)
+```
+
+3. 앞의 토큰화한 결과에서 `stop_words` 불용어 사전을 이용하여 불용어를 제거하시오.
+
+```{r word3, exercise = TRUE}
+commencement %>% mutate(... = ...) %>%
+  unnest_tokens(output = ..., input = ...) %>%
+  anti_join(...)
+```
+
+```{r word3-solution}
+commencement %>% mutate(para_number = row_number()) %>%
+  unnest_tokens(output = word, input = text) %>%
+  anti_join(stop_words)
+```
+
+4. 앞의 결과에서 `sentiments` 감정 어휘 사전을 이용하여 감정 어휘를 추출하시오.
+
+```{r word4, exercise = TRUE, exercise.lines=5}
+commencement %>% mutate(... = ...) %>%
+  unnest_tokens(output = ..., input = ...) %>%
+  anti_join(...) %>%
+  inner_join(...)
+```
+
+```{r word4-solution}
+commencement %>% mutate(para_number = row_number()) %>%
+  unnest_tokens(output = word, input = text) %>%
+  anti_join(stop_words) %>%
+  inner_join(sentiments)
+```
+
+5. 앞의 결과에서 문단 별로 긍정과 부정 단어의 수를 세어보시오.
+
+```{r word5, exercise = TRUE, exercise.lines=6}
+commencement %>% mutate(... = ...) %>%
+  unnest_tokens(output = ..., input = ...) %>%
+  anti_join(...) %>%
+  inner_join(...) %>%
+  count(..., ...)
+```
+
+```{r word5-solution}
+commencement %>% mutate(para_number = row_number()) %>%
+  unnest_tokens(output = word, input = text) %>%
+  anti_join(stop_words) %>%
+  inner_join(sentiments) %>%
+  count(para_number, sentiment)
+```
+
+6. 앞의 결과를 넓은 형식으로 변환해 보시오. `sentiment` 열의 내용이 열의 이름으로, `n`이 각 열의 값으로 들어가게 하시오. 아울러 데이터가 없는 셀의 값은 0이 되도록 하시오.
+
+```{r word6, exercise = TRUE, exercise.lines=7}
+commencement %>% mutate(... = ...) %>%
+  unnest_tokens(output = ..., input = ...) %>%
+  anti_join(...) %>%
+  inner_join(...) %>%
+  count(..., ...) %>%
+  pivot_wider(names_from = ..., values_from = ..., values_fill = list(... = ...))
+```
+
+```{r word6-solution}
+commencement %>% mutate(para_number = row_number()) %>%
+  unnest_tokens(output = word, input = text) %>%
+  anti_join(stop_words) %>%
+  inner_join(sentiments) %>%
+  count(para_number, sentiment) %>%
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = list(n = 0))
+```
+
+7. 앞의 결과에다 각 문단의 감성을 점수화하기 위해 `positive` 열에서 `negative` 열을 뺀 결과를 `sent` 열로 덧붙이시오. 
+
+```{r word7, exercise = TRUE, exercise.lines=8}
+commencement %>% mutate(... = ...) %>%
+  unnest_tokens(output = ..., input = ...) %>%
+  anti_join(...) %>%
+  inner_join(...) %>%
+  count(..., ...) %>%
+  pivot_wider(names_from = ..., values_from = ..., values_fill = list(... = ...)) %>%
+  mutate(... = ...)
+```
+
+```{r word7-solution}
+commencement %>% mutate(para_number = row_number()) %>%
+  unnest_tokens(output = word, input = text) %>%
+  anti_join(stop_words) %>%
+  inner_join(sentiments) %>%
+  count(para_number, sentiment) %>%
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = list(n = 0)) %>%
+  mutate(sent = positive - negative)
+```
+
+8. 앞의 결과를 이용하여 문단이 진행됨에 따라 감성의 변화가 어떻게 변화하였는지에 대한 그래프를 그려보시오. 가로축은 `para_number`, 세로축은 `sent`로 하여 막대 그래프를 그리시오. 
+
+```{r word8, exercise = TRUE, exercise.lines=10}
+commencement %>% mutate(... = ...) %>%
+  unnest_tokens(output = ..., input = ...) %>%
+  anti_join(...) %>%
+  inner_join(...) %>%
+  count(..., ...) %>%
+  pivot_wider(names_from = ..., values_from = ..., values_fill = list(... = ...)) %>%
+  mutate(... = ...) %>%
+  ggplot() + geom_col(aes(..., ...))
+```
+
+```{r word8-solution}
+commencement %>% mutate(para_number = row_number()) %>%
+  unnest_tokens(output = word, input = text) %>%
+  anti_join(stop_words) %>%
+  inner_join(sentiments) %>%
+  count(para_number, sentiment) %>%
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = list(n = 0)) %>%
+  mutate(sent = positive - negative) %>%
+  ggplot() + geom_col(aes(para_number, sent))
+```
+
+9. 앞의 그래프에서 문단의 감정(`sent`)가 0보다 크면 "긍정", 0보다 작거나 같으면 "부정"으로 나누어 막대 그래프의 채우기 색이 달리 나타나도록 해 보시오.
+
+```{r word9, exercise = TRUE, exercise.lines=10}
+commencement %>% mutate(... = ...) %>%
+  unnest_tokens(output = ..., input = ...) %>%
+  anti_join(...) %>%
+  inner_join(...) %>%
+  count(..., ...) %>%
+  pivot_wider(names_from = ..., values_from = ..., values_fill = list(... = ...)) %>%
+  mutate(... = ...) %>%
+  ggplot() + geom_col(aes(..., ..., fill = ifelse(... > 0 , ..., ...)))  
+```
+
+```{r word9-solution}
+commencement %>% mutate(para_number = row_number()) %>%
+  unnest_tokens(output = word, input = text) %>%
+  anti_join(stop_words) %>%
+  inner_join(sentiments) %>%
+  count(para_number, sentiment) %>%
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = list(n = 0)) %>%
+  mutate(sent = positive - negative) %>%
+  ggplot() + geom_col(aes(para_number, sent, fill = ifelse(sent > 0, "긍정", "부정")))
+```
+
+10. 앞의 그래프에서 채우기 색의 레이블을 "감성"으로, x-축의 레이블을 "문단 번호", y-축의 레이블을 "감성 점수"로 바꾸어 보시오.
+
+```{r word10, exercise = TRUE, exercise.lines=11}
+commencement %>% mutate(... = ...) %>%
+  unnest_tokens(output = ..., input = ...) %>%
+  anti_join(...) %>%
+  inner_join(...) %>%
+  count(..., ...) %>%
+  pivot_wider(names_from = ..., values_from = ..., values_fill = list(... = ...)) %>%
+  mutate(... = ...) %>%
+  ggplot() + geom_col(aes(..., ..., fill = ifelse(... > 0 , ..., ...))) +
+  labs(... = ..., ... = ..., ... = ...)
+```
+
+```{r word10-solution}
+commencement %>% mutate(para_number = row_number()) %>%
+  unnest_tokens(output = word, input = text) %>%
+  anti_join(stop_words) %>%
+  inner_join(sentiments) %>%
+  count(para_number, sentiment) %>%
+  pivot_wider(names_from = sentiment, values_from = n, values_fill = list(n = 0)) %>%
+  mutate(sent = positive - negative) %>%
+  ggplot() + geom_col(aes(para_number, sent, fill = ifelse(sent > 0, "긍정", "부정"))) +
+  labs(fill = "감성", x = "문단 번호", y = "감성 점수")
+```
+
+
+
