@@ -14,4 +14,8 @@ Imports:
   textdata,
   tidytext,
   tidyverse,
-  wordcloud
+  wordcloud,
+  janeaustenr,
+  topicmodels,
+  rvest,
+  tm
